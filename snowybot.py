@@ -230,34 +230,34 @@ class RunBot:
 
             self.reload_page()
             return
+        if ((self.shadow==bal) or (self.smokey==bal)):
+            current = bal
+            self.mighty = ((math.floor(current / self.tens)) * self.tens)
 
-        current = bal
-        self.mighty = ((math.floor(current / self.tens)) * self.tens)
-
-        if current >= (self.orgy + (self.tens * self.fart)):
+            if current >= (self.orgy + (self.tens * self.fart)):
                 self.cat = self.tabby
                 self.fart = 1
                 self.felix = self.mighty
                 self.orgy = self.mighty
 
-        if (current > (self.mighty + self.sevens)) and (current < (self.mighty + self.eights)) and current > self.felix:
+            if (current > (self.mighty + self.sevens)) and (current < (self.mighty + self.eights)) and current > self.felix:
                 self.cat *= 2
                 self.felix = current
 
-        if (current > (self.mighty + self.sevens)) and (current < (self.mighty + self.eights)) and current < self.felix:
+            if (current > (self.mighty + self.sevens)) and (current < (self.mighty + self.eights)) and current < self.felix:
                 self.cat *= 2
                 self.fart = 0
                 self.felix = current
 
-        print(f"📈 Bal: {bal:.8f}| Profit: {(bal - self.whiskers):.8f} | Bet: {self.cat:.8f}")
+            print(f"📈 Bal: {bal:.8f}| Profit: {(bal - self.whiskers):.8f} | Bet: {self.cat:.8f}")
+    
+            self.set_value("#pct_chance", self.purr)
+            self.set_value("#pct_bet", f"{self.cat:.8f}")
 
-        self.set_value("#pct_chance", self.purr)
-        self.set_value("#pct_bet", f"{self.cat:.8f}")
+            self.shadow = round(current + self.cat, 8)
+            self.smokey = round(current - self.cat, 8)
 
-        self.shadow = round(current + self.cat, 8)
-        self.smokey = round(current - self.cat, 8)
-
-        save_state({
+            save_state({
                 "cat": self.cat,
                 "felix": self.felix,
                 "orgy": self.orgy,
@@ -265,9 +265,9 @@ class RunBot:
                 "smokey": self.smokey,
                 "fart": self.fart,
                 "last_balance": self.last_balance
-        })
+            })
 
-        self.run_js_click("#a_lo")
+            self.run_js_click("#a_lo")
     # -------------------------------
     def reload_page(self):
         print("🧹 FULL reset (new profile)...")
