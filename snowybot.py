@@ -231,7 +231,7 @@ class RunBot:
             self.reload_page()
             return
 
-        if ((self.shadow == bal) or (self.smokey == bal)):
+        if (self.shadow != bal):
 
             current = bal
             self.mighty = ((math.floor(current / self.tens)) * self.tens)
@@ -256,8 +256,6 @@ class RunBot:
             self.set_value("#pct_chance", self.purr)
             self.set_value("#pct_bet", f"{self.cat:.8f}")
 
-            self.shadow = round(current + self.cat, 8)
-            self.smokey = round(current - self.cat, 8)
 
             save_state({
                 "cat": self.cat,
@@ -269,6 +267,7 @@ class RunBot:
                 "last_balance": self.last_balance
             })
 
+            self.shadow = current
             self.run_js_click("#a_lo")
 
     # -------------------------------
