@@ -41,13 +41,8 @@ class BotEngine(QMainWindow):
         self.tens = Decimal("0")
         self.sevens = Decimal("0")
         self.eights = Decimal("0")
-        profile = QWebEngineProfile.defaultProfile()
-        cookie_store = profile.cookieStore()
 
         # Wipe everything
-        cookie_store.deleteAllCookies()
-        profile = QWebEngineProfile.defaultProfile()
-        profile.setPersistentCookiesPolicy(QWebEngineProfile.NoPersistentCookies)
         # --- UI SETUP ---
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -92,8 +87,14 @@ class BotEngine(QMainWindow):
         left_layout.addWidget(self.log_box)
 
         # RIGHT PANEL: Browser
-        
         self.browser_view = QWebEngineView()
+        self.profile = QWebEngineProfile.defaultProfile()
+        self.cookie_store = self.profile.cookieStore()
+
+        # Wipe everything
+        self.cookie_store.deleteAllCookies()
+ 
+        self.last_activity_time = time.time()
         
         splitter = QSplitter()
         splitter.addWidget(left_panel)
@@ -116,8 +117,10 @@ class BotEngine(QMainWindow):
         sb.setValue(sb.maximum())
 
     def on_load_finished(self):
-        self.log("✅ Page Loaded. Please Login.")
-        self.browser_view.page().runJavaScript("document.querySelectorAll('.fancybox-overlay').forEach(e => e.remove());")
+        self.log("✅ Page Loaded.")
+        try:
+           self.browser_view.page().runJavaScript("document.querySelectorAll('.fancybox-overlay').forEach(e => e.remove());")
+        except: pass
 
     def inject_login(self):
         u = self.user_input.text()
@@ -161,6 +164,7 @@ class BotEngine(QMainWindow):
             self.btn_start.setEnabled(True)
             self.btn_start.setStyleSheet("background-color: #008000; color: white; font-weight: bold;")
             self.setup_state(Decimal(val))
+            self.last_activity_time = time.time()
         else:
             self.log("❌ Login failed or slow load. Click Inject again.")
 
@@ -283,15 +287,40 @@ class BotEngine(QMainWindow):
             self.process_tick
         )
 
+    def kool_poop(self):
+        self.toggle_engine()
+        QTimer.singleShot(2000, self.lol_poop)
+    
+    def lol_poop(self):
+        self.cookie_store.deleteAllCookies()
+        self.browser_view.reload()
+        QTimer.singleShot(15000, self.lolz_pooper)
+    
+    def lolz_pooper(self):
+        self.on_load_finished()
+        QTimer.singleShot(5000, self.devils_pooped)
+
+    def devils_pooped(self):
+        self.inject_login()
+        QTimer.singleShot(20000, self.angel_popped)
+
+    def angel_popped(self):
+        self.toggle_engine()
+
     def process_tick(self, bal_str):
         if not bal_str or not self.is_running: return
         try:
             current_real = Decimal(bal_str)
         except: return
 
+        if time.time() - self.last_activity_time > 10:
+            self.last_activity_time = time.time()
+            self.kool_poop()
+            
         # CASE 1: BALANCE CHANGED (Bet Processed)
         if current_real != self.last_balance:
             self.last_change_time = time.time() # Reset Stuck Timer
+            self.last_activity_time = time.time()
             
             delta = current_real - self.last_balance
             
@@ -347,6 +376,7 @@ class BotEngine(QMainWindow):
                 self.fire_bet()
                 self.last_change_time = time.time() 
 
+                
     def fire_bet(self):
         js = f"""
         var chance = document.getElementById('pct_chance');
