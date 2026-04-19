@@ -4,7 +4,7 @@ import math
 import time
 from decimal import Decimal, getcontext
 from datetime import datetime
-
+from PyQt5.QtNetwork import QNetworkCookie
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, 
                              QWidget, QLabel, QLineEdit, QPushButton, QTextEdit, 
                              QCheckBox, QSplitter, QFrame)
@@ -41,7 +41,13 @@ class BotEngine(QMainWindow):
         self.tens = Decimal("0")
         self.sevens = Decimal("0")
         self.eights = Decimal("0")
+        profile = QWebEngineProfile.defaultProfile()
+        cookie_store = profile.cookieStore()
 
+        # Wipe everything
+        cookie_store.deleteAllCookies()
+        profile = QWebEngineProfile.defaultProfile()
+        profile.setPersistentCookiesPolicy(QWebEngineProfile.NoPersistentCookies)
         # --- UI SETUP ---
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -86,25 +92,12 @@ class BotEngine(QMainWindow):
         left_layout.addWidget(self.log_box)
 
         # RIGHT PANEL: Browser
-        right_panel = QWidget()
-        right_layout = QVBoxLayout(right_panel)
         
         self.browser_view = QWebEngineView()
-        profile = QWebEngineProfile("secure_profile", self.browser_view)
-        page = QWebEnginePage(profile, self.browser_view)
-        self.browser_view.setPage(page)
         
-        self.chk_visible = QCheckBox("Show Browser (Uncheck for Headless Mode)")
-        self.chk_visible.setChecked(True)
-        self.chk_visible.toggled.connect(lambda x: self.browser_view.setVisible(x))
-
-        right_layout.addWidget(self.chk_visible)
-        right_layout.addWidget(self.browser_view)
-
         splitter = QSplitter()
         splitter.addWidget(left_panel)
-        splitter.addWidget(right_panel)
-        splitter.setStretchFactor(1, 3)
+        splitter.setStretchFactor(1, 1)
         main_layout.addWidget(splitter)
 
         # --- TIMERS ---
