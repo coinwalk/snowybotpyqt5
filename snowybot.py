@@ -7,9 +7,12 @@ from datetime import datetime
 from PyQt5.QtNetwork import QNetworkCookie
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, 
                              QWidget, QLabel, QLineEdit, QPushButton, QTextEdit, 
-                             QCheckBox, QSplitter, QFrame)
-from PyQt5.QtCore import QTimer, QUrl
+                             QCheckBox, QSplitter, QFrame, QTableWidgetItem, 
+                             QAbstractItemView, QTableWidget, QHeaderView, QProgressBar)
+from PyQt5.QtChart import QChart, QChartView, QLineSeries, QValueAxis
+from PyQt5.QtCore import QTimer, QUrl, Qt
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineProfile
+from PyQt5.QtGui import QPainter, QPen, QColor
 
 # Set precision
 getcontext().prec = 20
@@ -85,8 +88,65 @@ class BotEngine(QMainWindow):
         left_layout.addWidget(QFrame(frameShape=QFrame.HLine))
         left_layout.addWidget(self.btn_start)
         left_layout.addWidget(self.log_box)
+        
+        # --- PROFIT CHART SETUP ---
+        self.series = QLineSeries()
+        
+        # Style the line
+        pen = QPen(QColor("#0f0"))
+        pen.setWidth(2)
+        self.series.setPen(pen)
 
-        # RIGHT PANEL: Browser
+        self.chart = QChart()
+        self.chart.addSeries(self.series)
+        self.chart.legend().hide()
+        self.chart.setBackgroundVisible(False)
+        self.chart.layout().setContentsMargins(0, 0, 0, 0)
+
+        # Axis Setup
+        self.axis_x = QValueAxis()
+        self.axis_x.setLabelFormat("%d")
+        self.axis_x.setTitleText("Bets")
+        
+        self.axis_y = QValueAxis()
+        self.axis_y.setTitleText("Profit")
+
+        self.chart.addAxis(self.axis_x, Qt.AlignBottom)
+        self.chart.addAxis(self.axis_y, Qt.AlignLeft)
+        self.series.attachAxis(self.axis_x)
+        self.series.attachAxis(self.axis_y)
+
+        # The actual Widget that displays the chart
+        self.chart_view = QChartView(self.chart)
+        self.chart_view.setRenderHint(QPainter.Antialiasing)
+        self.chart_view.setMinimumHeight(250)
+        self.chart_view.setStyleSheet("background: transparent;")
+
+        # Track data points
+        self.bet_count = 0
+        self.current_total_profit = 0
+
+        # Add to layout
+        left_layout.addWidget(QLabel("<b>Profit Performance</b>"))
+        left_layout.addWidget(self.chart_view)
+
+        # --- RESET BUTTON ---
+        self.btn_reset_chart = QPushButton("Clear Chart Data")
+        self.btn_reset_chart.clicked.connect(self.reset_chart)
+        self.btn_reset_chart.setStyleSheet("""
+            QPushButton { 
+                background-color: #444; 
+                color: white; 
+                border-radius: 4px; 
+                padding: 5px; 
+            }
+            QPushButton:hover { background-color: #555; }
+        """)
+        
+        # Add to layout under the chart
+        left_layout.addWidget(self.btn_reset_chart)
+
+        # Darn: Browser
         self.browser_view = QWebEngineView()
         self.profile = QWebEngineProfile.defaultProfile()
         self.cookie_store = self.profile.cookieStore()
@@ -97,7 +157,7 @@ class BotEngine(QMainWindow):
         self.last_activity_time = time.time()
         
         splitter = QSplitter()
-        splitter.addWidget(left_panel)
+        splitter.addWidget(left_panel)       
         splitter.setStretchFactor(1, 1)
         main_layout.addWidget(splitter)
 
@@ -105,10 +165,25 @@ class BotEngine(QMainWindow):
         self.heartbeat = QTimer()
         self.heartbeat.setInterval(150) # 150ms Tick
         self.heartbeat.timeout.connect(self.tick)
+        self.reset_chart()
 
         self.log("System initialized. Loading Just-Dice...")
         self.browser_view.setUrl(QUrl(URL))
         self.browser_view.loadFinished.connect(self.on_load_finished)
+    
+    def reset_chart(self):
+        # 1. Clear the actual data points
+        self.series.clear()
+        
+        # 2. Reset the counters
+        self.bet_count = 0
+        self.current_total_profit = 0
+        
+        # 3. Reset the axes so they don't stay zoomed out
+        self.axis_x.setRange(0, 100000)
+        self.axis_y.setRange(-500000, 500000)
+        
+        self.log("📊 Chart data has been cleared.")
 
     def log(self, msg):
         ts = datetime.now().strftime('%H:%M:%S')
@@ -199,6 +274,27 @@ class BotEngine(QMainWindow):
 
         self.last_balance = real_bal
         self.update_ui_stats()
+   
+    def update_chart(self, delta):
+        self.bet_count += 1
+        self.current_total_profit += float(delta) # Use float for chart compatibility
+        
+        # Add new point (X = Bet Number, Y = Total Profit)
+        self.series.append(self.bet_count, self.current_total_profit)
+
+        # Auto-scale the axes so the line is always visible
+        self.axis_x.setRange(max(0, self.bet_count - 5000000), self.bet_count + 5)
+        
+        # Dynamic Y-axis scaling
+        points = self.series.pointsVector()
+        if points:
+            y_values = [p.y() for p in points[-5000000:]] # Look at last 50 bets
+            margin = abs(max(y_values) - min(y_values)) * 0.1
+            self.axis_y.setRange(min(y_values) - margin, max(y_values) + margin)
+
+        # Keep memory clean: remove points older than 100 bets
+        #if self.series.count() > 1000000:
+        # self.series.remove(0)
 
     def load_state_file(self):
         try:
@@ -329,7 +425,10 @@ class BotEngine(QMainWindow):
             self.last_activity_time = time.time()
             
             delta = current_real - self.last_balance
-            
+
+            # CALL THE CHART HERE
+            self.update_chart(delta)
+
             # Hacker Guard
             if abs(delta) > (self.cat * Decimal("1.01")):
                 self.log(f"🚨 SECURITY: Delta {delta} > Bet {self.cat}")
