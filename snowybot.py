@@ -194,7 +194,7 @@ class BotEngine(QMainWindow):
             self.fart = 1
             self.tracked_balance = self.initial_balance = real_bal
             self.next_compound = real_bal * Decimal("2.4")
-            mighty = (math.floor(real_bal / self.tens)) * self.tens
+            mighty = ((math.floor(real_bal / self.tens)) * self.tens)
             self.felix = self.orgy = mighty
 
         self.last_balance = real_bal
@@ -225,9 +225,9 @@ class BotEngine(QMainWindow):
     def calculate_units(self, balance):
         if balance == 0: return
         self.tabby = (balance / Decimal("144000")).quantize(Decimal("1.00000000"))
-        self.tens = self.tabby * 10
-        self.sevens = self.tabby * Decimal("6.9")
-        self.eights = self.tabby * Decimal("7.9")
+        self.tens = (self.tabby * Decimal("10.0"))
+        self.sevens = (self.tabby * Decimal("6.9"))
+        self.eights = (self.tabby * Decimal("7.9"))
 
     # ---------------------------------------------------------------------------
     # ENGINE CONTROL
@@ -347,24 +347,22 @@ class BotEngine(QMainWindow):
                 self.cat = self.tabby
 
             # Strategy
-            mighty = (math.floor(self.tracked_balance / self.tens)) * self.tens
+            mighty = ((math.floor(self.tracked_balance / self.tens)) * self.tens)
             
             if self.tracked_balance >= (self.orgy + (self.tens * self.fart)):
                 self.cat = self.tabby
                 self.fart = 1
-                self.felix = self.orgy = mighty
+                self.felix = mighty
+                self.orgy = mighty
 
-            in_zone = (mighty + self.sevens) < self.tracked_balance < (mighty + self.eights)
-            if in_zone:
-                try:
-                    if self.tracked_balance < self.felix:
-                        self.fart = 0
-                        self.cat *= 2
-                        self.felix = self.tracked_balance
-                    elif self.tracked_balance > self.felix:
-                        self.cat *= 2
-                        self.felix = self.tracked_balance
-                except: pass
+            if self.tracked_balance > (mighty + self.sevens) and self.tracked_balance < (mighty + self.eights) and self.tracked_balance < self.felix:
+                 self.fart = 0
+                 self.cat *= 2
+                 self.felix = self.tracked_balance
+
+            if self.tracked_balance > (mighty + self.sevens) and self.tracked_balance < (mighty + self.eights) and self.tracked_balance > self.felix:
+                 self.cat *= 2
+                 self.felix = self.tracked_balance
             
             # LOG & UI
             sess = self.tracked_balance - self.initial_balance
