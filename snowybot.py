@@ -275,6 +275,7 @@ class BotEngine(QMainWindow):
         
         # Start Timer
         self.last_change_time = time.time()
+        self.last_activity_time = time.time()
         self.fire_bet()
         self.heartbeat.start()
 
@@ -288,23 +289,28 @@ class BotEngine(QMainWindow):
         )
 
     def kool_poop(self):
+        self.log("please wait for reconnect stopping engine dont worry will reconnect...")
         self.toggle_engine()
         QTimer.singleShot(2000, self.lol_poop)
     
     def lol_poop(self):
+        self.log("please wait for reconnect reloading browser dont worry will reconnect...")
         self.cookie_store.deleteAllCookies()
         self.browser_view.reload()
         QTimer.singleShot(15000, self.lolz_pooper)
     
     def lolz_pooper(self):
+        self.log("please wait for reconnect clicking popup dont worry will reconnect...")
         self.on_load_finished()
         QTimer.singleShot(5000, self.devils_pooped)
 
     def devils_pooped(self):
+        self.log("please wait for reconnect injecting login as why your login stays there dont worry will reconnect...")
         self.inject_login()
         QTimer.singleShot(20000, self.angel_popped)
 
     def angel_popped(self):
+        self.log("please wait for reconnect ...reconnecting...")
         self.toggle_engine()
 
     def process_tick(self, bal_str):
