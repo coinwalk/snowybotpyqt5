@@ -25,7 +25,7 @@ class BotEngine(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("JustDice Native Bot (Infinite Flow)")
-        self.resize(1100, 700)
+        self.resize(1024, 768)
 
         # --- INTERNAL STATE ---
         self.is_running = False
@@ -54,6 +54,9 @@ class BotEngine(QMainWindow):
         # LEFT PANEL: Controls
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
+        # right PANEL: Controls
+        right_panel = QWidget()
+        right_layout = QVBoxLayout(right_panel)
         
         self.user_input = QLineEdit()
         self.user_input.setPlaceholderText("Username")
@@ -76,6 +79,7 @@ class BotEngine(QMainWindow):
         self.log_box.setReadOnly(True)
         self.log_box.setStyleSheet("background: #111; color: #0f0; font-family: monospace; font-size: 11px;")
 
+        left_layout.addWidget(QLabel("<b>Just-dice.com snowybot</b>"))
         left_layout.addWidget(QLabel("<b>Credentials</b>"))
         left_layout.addWidget(self.user_input)
         left_layout.addWidget(self.pass_input)
@@ -127,8 +131,8 @@ class BotEngine(QMainWindow):
         self.current_total_profit = 0
 
         # Add to layout
-        left_layout.addWidget(QLabel("<b>Profit Performance</b>"))
-        left_layout.addWidget(self.chart_view)
+        right_layout.addWidget(QLabel("<b>Profit Performance</b>"))
+        right_layout.addWidget(self.chart_view)
 
         # --- RESET BUTTON ---
         self.btn_reset_chart = QPushButton("Clear Chart Data")
@@ -157,7 +161,8 @@ class BotEngine(QMainWindow):
         self.last_activity_time = time.time()
         
         splitter = QSplitter()
-        splitter.addWidget(left_panel)       
+        splitter.addWidget(left_panel) 
+        splitter.addWidget(right_panel)      
         splitter.setStretchFactor(1, 1)
         main_layout.addWidget(splitter)
 
@@ -192,7 +197,7 @@ class BotEngine(QMainWindow):
         sb.setValue(sb.maximum())
 
     def on_load_finished(self):
-        self.log("✅ Page Loaded.")
+        self.log("✅ Page Loaded removing popup if there.")
         try:
            self.browser_view.page().runJavaScript("document.querySelectorAll('.fancybox-overlay').forEach(e => e.remove());")
         except: pass
@@ -224,7 +229,7 @@ class BotEngine(QMainWindow):
         }})();
         """
         self.browser_view.page().runJavaScript(js)
-        self.log("⏳ Credentials injected...")
+        self.log("⏳ Credentials injecting please wait...")
         QTimer.singleShot(15000, self.check_ready)
 
     def check_ready(self):
@@ -393,13 +398,8 @@ class BotEngine(QMainWindow):
         self.log("please wait for reconnect reloading browser dont worry will reconnect...")
         self.cookie_store.deleteAllCookies()
         self.browser_view.reload()
-        QTimer.singleShot(15000, self.lolz_pooper)
-    
-    def lolz_pooper(self):
-        self.log("please wait for reconnect clicking popup dont worry will reconnect...")
-        self.on_load_finished()
         QTimer.singleShot(5000, self.devils_pooped)
-
+    
     def devils_pooped(self):
         self.log("please wait for reconnect injecting login as why your login stays there dont worry will reconnect...")
         self.inject_login()
